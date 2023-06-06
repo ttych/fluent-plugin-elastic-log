@@ -10,3 +10,7 @@ require 'fluent/test/helpers'
 
 Test::Unit::TestCase.include(Fluent::Test::Helpers)
 Test::Unit::TestCase.extend(Fluent::Test::Helpers)
+
+require 'test/fixtures/fixture'
+
+Test::Unit::TestCase.include(Test::Fixture)

@@ -10,6 +10,9 @@ Metrics/BlockLength:
     - fluent-plugin-elastic-log.gemspec
     - test/**/*.rb
 
+Metrics/MethodLength:
+  Max: 20
+
 Naming/MethodParameterName:
   Exclude:
     - lib/fluent/plugin/out_elastic_audit_log_metric.rb
