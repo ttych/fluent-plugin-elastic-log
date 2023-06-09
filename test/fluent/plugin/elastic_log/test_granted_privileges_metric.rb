@@ -50,6 +50,17 @@ class TestGrantedPrivilegesMetric < Test::Unit::TestCase
         conf: conf
       )
 
+      assert_equal 1_675_397_106_777, metric.timestamp
+    end
+
+    test 'it can generate timestamp as epoch millis string format' do
+      conf = FakeConf.new(timestamp_format: :epochmillis_str)
+      metric = Fluent::Plugin::ElasticLog::GrantedPrivilegesMetric.new(
+        time: @time,
+        record: @record,
+        conf: conf
+      )
+
       assert_equal '1675397106777', metric.timestamp
     end
   end

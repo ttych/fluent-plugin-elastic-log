@@ -78,7 +78,7 @@ module Fluent
       config_param :privilege_key, :string, default: DEFAULT_PRIVILEGE_KEY
 
       desc 'Timestamp format'
-      config_param :timestamp_format, :enum, list: %i[iso epochmillis], default: :iso
+      config_param :timestamp_format, :enum, list: %i[iso epochmillis epochmillis_str], default: :iso
 
       desc 'Aggregate ILM'
       config_param :aggregate_ilm, :bool, default: true

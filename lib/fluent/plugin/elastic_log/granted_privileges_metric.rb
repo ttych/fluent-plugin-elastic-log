@@ -21,12 +21,13 @@ module Fluent
         #   data/write/*  => write
         #   monitor/*     => monitor
         PRIVILEGE_MAP = {
-          "cluster:admin/" => 'admin_query',
-          "cluster:monitor/" => 'monitor_query',
-          "indices:admin/" => 'admin_query',
-          "indices:data/read/" => 'read_query',
-          "indices:data/write/" => 'write_query',
-          "indices:monitor/" => 'monitor_query'
+          'cluster:admin/' => 'admin_query',
+          'cluster:monitor/' => 'monitor_query',
+          'indices:admin/' => 'admin_query',
+          'indices:data/read/' => 'read_query',
+          'indices:data/write/bulk' => 'bulk_write_query',
+          'indices:data/write/' => 'write_query',
+          'indices:monitor/' => 'monitor_query'
         }.freeze
 
         ILM_PATTERN = /^(.*)-\d{6}$/.freeze
@@ -39,6 +40,7 @@ module Fluent
           @conf = conf
         end
 
+        # rubocop:disable Metrics/AbcSize
         def timestamp
           begin
             timestamp = Time.parse(record[:timestamp])
@@ -46,16 +48,18 @@ module Fluent
             timestamp = time.to_time
           end
 
-          return timestamp.utc.strftime('%s%3N') if conf.timestamp_format == :epochmillis
+          return (timestamp.utc.to_f * 1000).to_i if conf.timestamp_format == :epochmillis
+          return timestamp.utc.strftime('%s%3N') if conf.timestamp_format == :epochmillis_str
 
           timestamp.utc.iso8601(3)
         end
+        # rubocop:enable Metrics/AbcSize
 
         def metric_name
           PRIVILEGE_MAP.each do |pattern, name|
             return "#{name}_count" if record[:privilege].to_s.start_with?(pattern)
           end
-          "unknown_count"
+          'unknown_count'
         end
 
         def base
