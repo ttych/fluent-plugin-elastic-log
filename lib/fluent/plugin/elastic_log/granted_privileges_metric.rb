@@ -21,23 +21,23 @@ module Fluent
         #   data/write/*  => write
         #   monitor/*     => monitor
         PRIVILEGE_MAP = {
-          'cluster:admin/' => 'admin_query',
-          'cluster:monitor/' => 'monitor_query',
-          'indices:admin/' => 'admin_query',
-          'indices:data/read/' => 'read_query',
-          'indices:data/write/bulk' => 'bulk_write_query',
-          'indices:data/write/' => 'write_query',
-          'indices:monitor/' => 'monitor_query'
+          'cluster:admin/' => 'admin',
+          'cluster:monitor/' => 'monitor',
+          'indices:admin/' => 'admin',
+          'indices:data/read/' => 'read',
+          'indices:data/write/' => 'write',
+          'indices:monitor/' => 'monitor'
         }.freeze
 
         ILM_PATTERN = /^(.*)-\d{6}$/.freeze
 
-        attr_reader :time, :record, :conf
+        attr_reader :time, :record, :conf, :prefix
 
-        def initialize(time:, record:, conf:)
+        def initialize(time:, record:, conf:, prefix: '')
           @time = time
           @record = record
           @conf = conf
+          @prefix = prefix
         end
 
         # rubocop:disable Metrics/AbcSize
@@ -55,9 +55,9 @@ module Fluent
         end
         # rubocop:enable Metrics/AbcSize
 
-        def metric_name
+        def query_type
           PRIVILEGE_MAP.each do |pattern, name|
-            return "#{name}_count" if record[:privilege].to_s.start_with?(pattern)
+            return name if record[:privilege].to_s.start_with?(pattern)
           end
           'unknown_count'
         end
@@ -65,10 +65,11 @@ module Fluent
         def base
           {
             'timestamp' => timestamp,
-            'metric_name' => metric_name,
+            'metric_name' => 'query_count',
             'metric_value' => 1,
-            'tags_user' => record[:user],
-            'tags_cluster' => record[:cluster]
+            "#{prefix}user" => record[:user],
+            "#{prefix}cluster" => record[:cluster],
+            "#{prefix}query_type" => query_type
           }
         end
 
@@ -86,7 +87,7 @@ module Fluent
         def generate_event_stream
           metric_es = MultiEventStream.new
           indices.each do |indice|
-            metric_es.add(time, base.merge(tags_technical_name: indice))
+            metric_es.add(time, base.merge("#{prefix}technical_name" => indice))
           end
           metric_es
         end

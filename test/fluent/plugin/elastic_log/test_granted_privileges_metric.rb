@@ -4,9 +4,9 @@ require 'helper'
 require 'fluent/plugin/elastic_log/granted_privileges_metric'
 
 class TestGrantedPrivilegesMetric < Test::Unit::TestCase
-  FakeConf = Struct.new(:timestamp_format, :aggregate_ilm) do
-    def initialize(timestamp_format: :iso, aggregate_ilm: true)
-      super(timestamp_format, aggregate_ilm)
+  FakeConf = Struct.new(:timestamp_format, :aggregate_ilm, :prefix) do
+    def initialize(timestamp_format: :iso, aggregate_ilm: true, prefix: '')
+      super(timestamp_format, aggregate_ilm, prefix)
     end
   end
 
@@ -81,23 +81,26 @@ class TestGrantedPrivilegesMetric < Test::Unit::TestCase
       end
 
       expected_events = [[@time, { 'timestamp' => '2023-02-03T04:05:06.777Z',
-                                   'metric_name' => 'read_query_count',
+                                   'metric_name' => 'query_count',
                                    'metric_value' => 1,
-                                   'tags_user' => 'test_user',
-                                   'tags_cluster' => 'TEST_CLUSTER',
-                                   :tags_technical_name => 'test_index_1-000001' }],
+                                   'user' => 'test_user',
+                                   'cluster' => 'TEST_CLUSTER',
+                                   'query_type' => 'read',
+                                   'technical_name' => 'test_index_1-000001' }],
                          [@time,  { 'timestamp' => '2023-02-03T04:05:06.777Z',
-                                    'metric_name' => 'read_query_count',
+                                    'metric_name' => 'query_count',
                                     'metric_value' => 1,
-                                    'tags_user' => 'test_user',
-                                    'tags_cluster' => 'TEST_CLUSTER',
-                                    :tags_technical_name => 'test_index_1-000002' }],
+                                    'user' => 'test_user',
+                                    'cluster' => 'TEST_CLUSTER',
+                                    'query_type' => 'read',
+                                    'technical_name' => 'test_index_1-000002' }],
                          [@time,  { 'timestamp' => '2023-02-03T04:05:06.777Z',
-                                    'metric_name' => 'read_query_count',
+                                    'metric_name' => 'query_count',
                                     'metric_value' => 1,
-                                    'tags_user' => 'test_user',
-                                    'tags_cluster' => 'TEST_CLUSTER',
-                                    :tags_technical_name => 'test_index_1-000003' }]]
+                                    'user' => 'test_user',
+                                    'cluster' => 'TEST_CLUSTER',
+                                    'query_type' => 'read',
+                                    'technical_name' => 'test_index_1-000003' }]]
 
       assert_equal 3, event_stream.size
       assert_equal expected_events, events
@@ -118,11 +121,12 @@ class TestGrantedPrivilegesMetric < Test::Unit::TestCase
       end
 
       expected_events = [[@time, { 'timestamp' => '2023-02-03T04:05:06.777Z',
-                                   'metric_name' => 'read_query_count',
+                                   'metric_name' => 'query_count',
                                    'metric_value' => 1,
-                                   'tags_user' => 'test_user',
-                                   'tags_cluster' => 'TEST_CLUSTER',
-                                   :tags_technical_name => 'test_index_1' }]]
+                                   'user' => 'test_user',
+                                   'cluster' => 'TEST_CLUSTER',
+                                   'query_type' => 'read',
+                                   'technical_name' => 'test_index_1' }]]
 
       assert_equal 1, event_stream.size
       assert_equal expected_events, events

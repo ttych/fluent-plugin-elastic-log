@@ -28,7 +28,7 @@ class TestElasticAuditLogMetricOutput < Test::Unit::TestCase
     test 'events type are filtered with allowed' do
       conf = %(
         #{DEFAULT_CONF}
-        events GRANTED_PRIVILEGES, BAD_HEADERS
+        categories GRANTED_PRIVILEGES, BAD_HEADERS
       )
       driver = create_driver(conf)
       output = driver.instance
@@ -37,11 +37,46 @@ class TestElasticAuditLogMetricOutput < Test::Unit::TestCase
     end
 
     test 'timestamp format is iso' do
-      # FIXME
+      conf = %(
+        #{DEFAULT_CONF}
+        timestamp_format iso
+      )
+      driver = create_driver(conf)
+      output = driver.instance
+
+      assert_equal :iso, output.timestamp_format
     end
 
     test 'timestamp format is epochmillis' do
-      # FIXME
+      conf = %(
+        #{DEFAULT_CONF}
+        timestamp_format epochmillis
+      )
+      driver = create_driver(conf)
+      output = driver.instance
+
+      assert_equal :epochmillis, output.timestamp_format
+    end
+
+    test 'attribute prefix definition' do
+      conf = %(
+        #{DEFAULT_CONF}
+        prefix tags
+      )
+      driver = create_driver(conf)
+      output = driver.instance
+
+      assert_equal 'tags', output.prefix
+    end
+
+    test 'aggregrate ILM option default value is true' do
+      conf = %(
+        #{DEFAULT_CONF}
+      )
+      driver = create_driver(conf)
+      output = driver.instance
+
+      assert_equal true, output.aggregate_ilm
     end
   end
 
@@ -59,11 +94,12 @@ class TestElasticAuditLogMetricOutput < Test::Unit::TestCase
       assert_equal([['test_tag',
                      timestamp,
                      { 'timestamp' => '2023-01-02T03:04:05.678Z',
-                       'metric_name' => 'read_query_count',
+                       'metric_name' => 'query_count',
                        'metric_value' => 1,
-                       'tags_user' => 'test_user',
-                       'tags_cluster' => 'TEST_CLUSTER',
-                       :tags_technical_name => 'test_index_1' }]], emitted)
+                       'user' => 'test_user',
+                       'cluster' => 'TEST_CLUSTER',
+                       'query_type' => 'read',
+                       'technical_name' => 'test_index_1' }]], emitted)
     end
   end
 

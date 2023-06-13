@@ -42,6 +42,7 @@ module Fluent
       DEFAULT_R_INDICES_KEY = 'audit_trace_resolved_indices'
       DEFAULT_TIMESTAMP_KEY = '@timestamp'
       DEFAULT_PRIVILEGE_KEY = 'audit_request_privilege'
+      DEFAULT_PREFIX = ''
 
       # REQUEST PRIVILEGE:
       # cluster:
@@ -79,7 +80,8 @@ module Fluent
 
       desc 'Timestamp format'
       config_param :timestamp_format, :enum, list: %i[iso epochmillis epochmillis_str], default: :iso
-
+      desc 'Attribute prefix'
+      config_param :prefix, :string, default: DEFAULT_PREFIX
       desc 'Aggregate ILM'
       config_param :aggregate_ilm, :bool, default: true
 
@@ -142,7 +144,8 @@ module Fluent
             layer: record[layer_key],
             request_type: record[request_type_key]
           },
-          conf: self
+          conf: self,
+          prefix: prefix
         ).generate_event_stream
       end
       # rubocop:enable Metrics/AbcSize
