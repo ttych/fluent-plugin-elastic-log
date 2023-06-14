@@ -17,6 +17,10 @@ Metrics/ClassLength:
 Metrics/MethodLength:
   Max: 20
 
+Metrics/ParameterLists:
+  Exclude:
+    - test/helper.rb
+
 Naming/MethodParameterName:
   Exclude:
     - lib/fluent/plugin/out_elastic_audit_log_metric.rb

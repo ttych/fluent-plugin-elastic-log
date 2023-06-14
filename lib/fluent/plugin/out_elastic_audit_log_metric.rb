@@ -16,7 +16,9 @@
 # limitations under the License.
 
 require 'fluent/plugin/output'
-require 'fluent/plugin/elastic_log/granted_privileges_metric'
+require 'fluent/event'
+
+require_relative 'elastic_log/audit_log_to_metric_processor'
 
 module Fluent
   module Plugin
@@ -43,16 +45,6 @@ module Fluent
       DEFAULT_TIMESTAMP_KEY = '@timestamp'
       DEFAULT_PRIVILEGE_KEY = 'audit_request_privilege'
       DEFAULT_PREFIX = ''
-
-      # REQUEST PRIVILEGE:
-      # cluster:
-      #   admin/*       => admin
-      #   monitor/*     => monitor
-      # indices:
-      #   admin/*       => admin
-      #   data/read/*   => read
-      #   data/write/*  => write
-      #   monitor/*     => monitor
 
       desc 'Tag to emit metric events on'
       config_param :tag, :string, default: nil
@@ -85,6 +77,8 @@ module Fluent
       desc 'Aggregate ILM'
       config_param :aggregate_ilm, :bool, default: true
 
+      attr_reader :metric_processor
+
       def configure(conf)
         super
         raise Fluent::ConfigError, "#{NAME}: tag is mandatory" if !tag || tag.to_s.empty?
@@ -96,6 +90,8 @@ module Fluent
           log.warn("#{NAME}: unsupported categories #{unsupported_categories}")
           @categories = categories - unsupported_categories
         end
+
+        @metric_processor = ElasticLog::AuditLogToMetricProcessor.new(conf: self)
 
         true
       end
@@ -112,43 +108,9 @@ module Fluent
       end
 
       def process(_tag, es)
-        es.each do |time, record|
-          next unless record
-          next unless (category = record[category_key])
-          next unless ALLOWED_CATEGORIES.include? category
-
-          event_time = Fluent::EventTime.from_time(time)
-          metric_es = send("generate_#{category.downcase}_metrics_for", event_time, record)
-          router.emit_stream(tag, metric_es) if metric_es
-        end
+        metrics = metric_processor.process(tag, es) || []
+        router.emit_stream(tag, metrics) if metrics
       end
-
-      # es = Fluent::MultiEventStream.new
-      # router.emit_stream(tag, es)
-
-      private
-
-      # rubocop:disable Metrics/AbcSize
-      def generate_granted_privileges_metrics_for(time, record)
-        return unless record[privilege_key]
-
-        Fluent::Plugin::ElasticLog::GrantedPrivilegesMetric.new(
-          time: time,
-          record: {
-            timestamp: record[timestamp_key],
-            privilege: record[privilege_key],
-            user: record[user_key],
-            cluster: record[cluster_key],
-            indices: record[indices_key],
-            r_indices: record[r_indices_key],
-            layer: record[layer_key],
-            request_type: record[request_type_key]
-          },
-          conf: self,
-          prefix: prefix
-        ).generate_event_stream
-      end
-      # rubocop:enable Metrics/AbcSize
     end
   end
 end

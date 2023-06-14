@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'helper'
+
 require 'fluent/plugin/out_elastic_audit_log_metric'
 
 # unit test for ElasticAuditLogMetricOutput / elastic_audit_log_metric plugin
@@ -81,8 +82,8 @@ class TestElasticAuditLogMetricOutput < Test::Unit::TestCase
   end
 
   sub_test_case 'GRANTED_PRIVILEGES' do
-    test 'privilege indices:data/read/search' do
-      record_content = load_json_fixture('granted_privileges__transport__data_read_search.json')
+    test 'process GRANTED_PRIVILEGES record' do
+      record_content = load_json_fixture('granted_privileges__transport__read.json')
 
       driver = create_driver
       timestamp = event_time('2023-01-02T03:04:05.678Z')
