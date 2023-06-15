@@ -22,7 +22,7 @@ module Fluent
             next unless conf.categories.include? category
 
             new_records = send("generate_#{category.downcase}_metrics_for", record)
-            new_records.each { |new_record| metric_es.add(time, new_record) }
+            new_records&.each { |new_record| metric_es.add(time, new_record) }
           end
           metric_es
         end
@@ -31,7 +31,7 @@ module Fluent
 
         # rubocop:disable Metrics/AbcSize
         def generate_granted_privileges_metrics_for(record)
-          return unless record[conf.privilege_key]
+          return [] unless record[conf.privilege_key]
 
           GrantedPrivilegesMetric.new(
             record: {
