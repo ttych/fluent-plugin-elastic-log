@@ -42,7 +42,7 @@ parameters for output metric:
 * aggregate_ilm: Aggregate ILM on resolved indices
 
 More details from the
-[elastic_audit_log_metric output plugin code](../blob/master/lib/fluent/plugin/out_elastic_audit_log_metric.rb)
+[elastic_audit_log_metric output plugin code](blob/master/lib/fluent/plugin/out_elastic_audit_log_metric.rb#L49)
 
 ## Installation
 
