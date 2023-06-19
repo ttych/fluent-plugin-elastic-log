@@ -76,6 +76,8 @@ module Fluent
       config_param :prefix, :string, default: DEFAULT_PREFIX
       desc 'Aggregate ILM'
       config_param :aggregate_ilm, :bool, default: true
+      desc 'Events block size'
+      config_param :event_stream_size, :integer, default: 1000
 
       attr_reader :metric_processor
 
@@ -109,7 +111,11 @@ module Fluent
 
       def process(_tag, es)
         metrics = metric_processor.process(tag, es) || []
-        router.emit_stream(tag, metrics) if metrics
+        metrics.each_slice(event_stream_size) do |metrics_slice|
+          metrics_es = MultiEventStream.new
+          metrics_slice.each { |time, record| metrics_es.add(time, record) }
+          router.emit_stream(tag, metrics_es)
+        end
       end
     end
   end

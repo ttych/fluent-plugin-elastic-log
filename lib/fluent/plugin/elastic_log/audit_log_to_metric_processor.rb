@@ -14,7 +14,7 @@ module Fluent
         end
 
         def process(_tag, log_es)
-          metric_es = MultiEventStream.new
+          metric_es = []
 
           log_es.each do |time, record|
             next unless record
@@ -22,7 +22,7 @@ module Fluent
             next unless conf.categories.include? category
 
             new_records = send("generate_#{category.downcase}_metrics_for", record)
-            new_records&.each { |new_record| metric_es.add(time, new_record) }
+            new_records&.each { |new_record| metric_es << [time, new_record] }
           end
           metric_es
         end
