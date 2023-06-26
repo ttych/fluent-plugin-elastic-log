@@ -87,8 +87,8 @@ module Fluent
 
         def generate_metrics
           metrics = []
-          indices.each do |indice|
-            metrics << base.merge("#{conf.prefix}technical_name" => indice)
+          indices.each do |index|
+            metrics << base.merge("#{conf.prefix}index" => index)
           end
           metrics
         end

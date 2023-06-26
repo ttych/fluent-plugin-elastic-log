@@ -73,21 +73,21 @@ class TestGrantedPrivilegesMetric < Test::Unit::TestCase
                             'user' => 'test_user',
                             'cluster' => 'TEST_CLUSTER',
                             'query_type' => 'read',
-                            'technical_name' => 'test_index_1-000001' },
+                            'index' => 'test_index_1-000001' },
                           { 'timestamp' => '2023-02-03T04:05:06.777Z',
                             'metric_name' => 'query_count',
                             'metric_value' => 1,
                             'user' => 'test_user',
                             'cluster' => 'TEST_CLUSTER',
                             'query_type' => 'read',
-                            'technical_name' => 'test_index_1-000002' },
+                            'index' => 'test_index_1-000002' },
                           { 'timestamp' => '2023-02-03T04:05:06.777Z',
                             'metric_name' => 'query_count',
                             'metric_value' => 1,
                             'user' => 'test_user',
                             'cluster' => 'TEST_CLUSTER',
                             'query_type' => 'read',
-                            'technical_name' => 'test_index_1-000003' }]
+                            'index' => 'test_index_1-000003' }]
 
       assert_equal 3, metrics.size
       assert_equal expected_metrics, metrics
@@ -108,7 +108,7 @@ class TestGrantedPrivilegesMetric < Test::Unit::TestCase
                             'user' => 'test_user',
                             'cluster' => 'TEST_CLUSTER',
                             'query_type' => 'read',
-                            'technical_name' => 'test_index_1' }]
+                            'index' => 'test_index_1' }]
 
       assert_equal 1, metrics.size
       assert_equal expected_metrics, metrics
@@ -131,7 +131,7 @@ class TestGrantedPrivilegesMetric < Test::Unit::TestCase
                             'user' => 'test_user',
                             'cluster' => 'TEST_CLUSTER',
                             'query_type' => 'unknown',
-                            'technical_name' => 'test_index_1' }]
+                            'index' => 'test_index_1' }]
 
       assert_equal 1, metrics.size
       assert_equal expected_metrics, metrics
@@ -152,7 +152,7 @@ class TestGrantedPrivilegesMetric < Test::Unit::TestCase
                             'user' => 'test_user',
                             'cluster' => 'TEST_CLUSTER',
                             'query_type' => 'destroy',
-                            'technical_name' => 'test_index_1' }]
+                            'index' => 'test_index_1' }]
 
       assert_equal 1, metrics.size
       assert_equal expected_metrics, metrics

@@ -100,7 +100,7 @@ class TestElasticAuditLogMetricOutput < Test::Unit::TestCase
                        'user' => 'test_user',
                        'cluster' => 'TEST_CLUSTER',
                        'query_type' => 'read',
-                       'technical_name' => 'test_index_1' }]], emitted)
+                       'index' => 'test_index_1' }]], emitted)
     end
   end
 

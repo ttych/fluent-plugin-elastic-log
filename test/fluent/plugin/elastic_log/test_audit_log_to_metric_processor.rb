@@ -30,7 +30,7 @@ class TestAuditLogToMetricProcessor < Test::Unit::TestCase
                               'user' => 'test_user',
                               'cluster' => 'TEST_CLUSTER',
                               'query_type' => 'read',
-                              'technical_name' => 'test_index_1' }]], out_es_a)
+                              'index' => 'test_index_1' }]], out_es_a)
     end
 
     test 'process 2 standard records' do
@@ -52,12 +52,12 @@ class TestAuditLogToMetricProcessor < Test::Unit::TestCase
                               'user' => 'test_user',
                               'cluster' => 'TEST_CLUSTER',
                               'query_type' => 'read',
-                              'technical_name' => 'test_index_1' }],
+                              'index' => 'test_index_1' }],
                     [@time, { 'cluster' => 'TEST_CLUSTER',
                               'metric_name' => 'query_count',
                               'metric_value' => 1,
                               'query_type' => 'delete',
-                              'technical_name' => 'test_index_2',
+                              'index' => 'test_index_2',
                               'timestamp' => '2023-01-02T03:04:05.678Z',
                               'user' => 'test_user' }]], out_es_a)
     end
