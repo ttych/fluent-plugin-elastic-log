@@ -20,19 +20,22 @@ FakeAuditLogMetricConf = Struct.new(
   :tag, :categories,
   :category_key, :layer_key, :request_type_key, :cluster_key,
   :user_key, :indices_key, :r_indices_key, :timestamp_key, :privilege_key,
-  :timestamp_format, :prefix, :aggregate_ilm
+  :rest_request_path_key, :request_body_key,
+  :timestamp_format, :prefix, :aggregate_index
 ) do
-  def initialize(tag: 'test_metric', categories: ['GRANTED_PRIVILEGES'],
+  def initialize(tag: 'test_metric', categories: %w[GRANTED_PRIVILEGES FAILED_LOGIN],
                  category_key: 'audit_category', layer_key: 'audit_request_layer',
                  request_type_key: 'audit_transport_request_type', cluster_key: 'audit_cluster_name',
                  user_key: 'audit_request_effective_user', indices_key: 'audit_trace_indices',
                  r_indices_key: 'audit_trace_resolved_indices', timestamp_key: '@timestamp',
-                 privilege_key: 'audit_request_privilege',
-                 timestamp_format: :iso, prefix: '', aggregate_ilm: true)
+                 privilege_key: 'audit_request_privilege', rest_request_path_key: 'audit_rest_request_path',
+                 request_body_key: 'audit_request_body',
+                 timestamp_format: :iso, prefix: '', aggregate_index: true)
 
     super(tag, categories,
           category_key, layer_key, request_type_key, cluster_key,
           user_key, indices_key, r_indices_key, timestamp_key, privilege_key,
-          timestamp_format, prefix, aggregate_ilm)
+          rest_request_path_key, request_body_key,
+          timestamp_format, prefix, aggregate_index)
   end
 end

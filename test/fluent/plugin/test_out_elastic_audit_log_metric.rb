@@ -19,11 +19,11 @@ class TestElasticAuditLogMetricOutput < Test::Unit::TestCase
       end
     end
 
-    test 'events are set to GRANTED_PRIVILEGES by default' do
+    test 'default allowed categories' do
       driver = create_driver
       output = driver.instance
 
-      assert_equal ['GRANTED_PRIVILEGES'], output.categories
+      assert_equal %w[GRANTED_PRIVILEGES FAILED_LOGIN], output.categories
     end
 
     test 'events type are filtered with allowed' do
@@ -77,7 +77,7 @@ class TestElasticAuditLogMetricOutput < Test::Unit::TestCase
       driver = create_driver(conf)
       output = driver.instance
 
-      assert_equal true, output.aggregate_ilm
+      assert_equal true, output.aggregate_index
     end
   end
 
@@ -101,6 +101,29 @@ class TestElasticAuditLogMetricOutput < Test::Unit::TestCase
                        'cluster' => 'TEST_CLUSTER',
                        'query_type' => 'read',
                        'technical_name' => 'test_index_1' }]], emitted)
+    end
+  end
+
+  sub_test_case 'FAILED_LOGIN' do
+    test 'process FAILED_LOGIN record' do
+      record_content = load_json_fixture('failed_login__msearch.json')
+
+      driver = create_driver
+      timestamp = event_time('2023-01-02T03:04:05.678Z')
+      driver.run do
+        driver.feed('tag', timestamp, record_content)
+      end
+
+      emitted = driver.events
+      assert_equal([['test_tag',
+                     timestamp,
+                     { 'timestamp' => '2023-01-02T03:04:05.678Z',
+                       'metric_name' => 'failed_login_count',
+                       'metric_value' => 1,
+                       'query_type' => 'msearch',
+                       'user' => 'test_user',
+                       'cluster' => 'TEST_CLUSTER',
+                       'index' => 'test_index' }]], emitted)
     end
   end
 

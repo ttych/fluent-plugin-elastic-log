@@ -59,7 +59,7 @@ class TestGrantedPrivilegesMetric < Test::Unit::TestCase
 
   sub_test_case 'generate_metrics' do
     test 'generates metrics for each resolved indices' do
-      conf = FakeAuditLogMetricConf.new(aggregate_ilm: false)
+      conf = FakeAuditLogMetricConf.new(aggregate_index: false)
       metric = Fluent::Plugin::ElasticLog::GrantedPrivilegesMetric.new(
         record: @record,
         conf: conf
@@ -94,7 +94,7 @@ class TestGrantedPrivilegesMetric < Test::Unit::TestCase
     end
 
     test 'generates metrics for aggregated ilm indices' do
-      conf = FakeAuditLogMetricConf.new(aggregate_ilm: true)
+      conf = FakeAuditLogMetricConf.new(aggregate_index: true)
       metric = Fluent::Plugin::ElasticLog::GrantedPrivilegesMetric.new(
         record: @record,
         conf: conf

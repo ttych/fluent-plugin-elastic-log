@@ -35,11 +35,13 @@ parameters for input record:
 * r_indices_key: Resolved indices key in input record
 * timestamp_key: Timestamp key in input record
 * privilege_key: Request privilege key in input record
+* rest_request_path_key: Rest request path key in input record
+* request_body_key: Request body key in input record
 
 parameters for output metric:
 * timestamp_format: Timestamp format (iso, epochmillis, epochmillis_str)
 * prefix: Attribute prefix for output metric
-* aggregate_ilm: Aggregate ILM on resolved indices
+* aggregate_index: Aggregate index (remove ilm suffix, wildcard suffix)
 
 More details from the
 [elastic_audit_log_metric output plugin code](lib/fluent/plugin/out_elastic_audit_log_metric.rb#L49)

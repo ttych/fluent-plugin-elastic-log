@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'granted_privileges_metric'
+require_relative 'failed_login_metric'
 
 module Fluent
   module Plugin
@@ -43,6 +44,22 @@ module Fluent
               r_indices: record[conf.r_indices_key],
               layer: record[conf.layer_key],
               request_type: record[conf.request_type_key]
+            },
+            conf: conf
+          ).generate_metrics
+        end
+        # rubocop:enable Metrics/AbcSize
+
+        # rubocop:disable Metrics/AbcSize
+        def generate_failed_login_metrics_for(record)
+          FailedLoginMetric.new(
+            record: {
+              timestamp: record[conf.timestamp_key],
+              user: record[conf.user_key],
+              cluster: record[conf.cluster_key],
+              layer: record[conf.layer_key],
+              request_path: record[conf.rest_request_path_key],
+              request_body: record[conf.request_body_key]
             },
             conf: conf
           ).generate_metrics

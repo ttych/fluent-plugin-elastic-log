@@ -31,7 +31,7 @@ module Fluent
 
       helpers :event_emitter
 
-      ALLOWED_CATEGORIES = %w[GRANTED_PRIVILEGES].freeze
+      ALLOWED_CATEGORIES = %w[GRANTED_PRIVILEGES FAILED_LOGIN].freeze
       # FAILED_LOGIN AUTHENTICATED MISSING_PRIVILEGES SSL_EXCEPTION
       # OPENDISTRO_SECURITY_INDEX_ATTEMPT BAD_HEADERS
 
@@ -42,6 +42,8 @@ module Fluent
       DEFAULT_USER_KEY = 'audit_request_effective_user'
       DEFAULT_INDICES_KEY = 'audit_trace_indices'
       DEFAULT_R_INDICES_KEY = 'audit_trace_resolved_indices'
+      DEFAULT_REST_REQUEST_PATH = 'audit_rest_request_path'
+      DEFAULT_REQUEST_BODY = 'audit_request_body'
       DEFAULT_TIMESTAMP_KEY = '@timestamp'
       DEFAULT_PRIVILEGE_KEY = 'audit_request_privilege'
       DEFAULT_PREFIX = ''
@@ -69,13 +71,17 @@ module Fluent
       config_param :timestamp_key, :string, default: DEFAULT_TIMESTAMP_KEY
       desc 'Request privilege key'
       config_param :privilege_key, :string, default: DEFAULT_PRIVILEGE_KEY
+      desc 'Rest request path key'
+      config_param :rest_request_path_key, :string, default: DEFAULT_REST_REQUEST_PATH
+      desc 'Request body key'
+      config_param :request_body_key, :string, default: DEFAULT_REQUEST_BODY
 
       desc 'Timestamp format'
       config_param :timestamp_format, :enum, list: %i[iso epochmillis epochmillis_str], default: :iso
       desc 'Attribute prefix'
       config_param :prefix, :string, default: DEFAULT_PREFIX
-      desc 'Aggregate ILM'
-      config_param :aggregate_ilm, :bool, default: true
+      desc 'Aggregate index'
+      config_param :aggregate_index, :bool, default: true
       desc 'Events block size'
       config_param :event_stream_size, :integer, default: 1000
 

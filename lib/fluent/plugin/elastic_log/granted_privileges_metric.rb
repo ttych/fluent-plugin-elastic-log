@@ -29,7 +29,8 @@ module Fluent
           'indices:monitor/' => 'monitor'
         }.freeze
 
-        ILM_PATTERN = /^(.*)-\d{6}$/.freeze
+        INDEX_PATTERN = /-?\*$/.freeze
+        ILM_PATTERN = /-\d{6}$/.freeze
 
         attr_reader :record, :conf
 
@@ -69,13 +70,19 @@ module Fluent
 
         def indices
           indices = record[:r_indices] || record[:indices] || [nil]
-          if conf.aggregate_ilm
+          if conf.aggregate_index
             indices = indices.inject(Set.new) do |acc, index|
-              aggregated_format = index && index[ILM_PATTERN, 1]
-              acc << (aggregated_format || index)
-            end.to_a
+              acc << aggregate_index(index)
+            end
           end
           indices
+        end
+
+        def aggregate_index(index)
+          return unless index
+          return index unless conf.aggregate_index
+
+          index.sub(INDEX_PATTERN, '').sub(ILM_PATTERN, '')
         end
 
         def generate_metrics
