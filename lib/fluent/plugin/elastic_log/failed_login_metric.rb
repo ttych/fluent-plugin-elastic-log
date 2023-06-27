@@ -92,7 +92,7 @@ module Fluent
                     when 'msearch' then msearch_indices
                     else []
                     end
-          indices << query_index if query_index || indices.empty?
+          indices << aggregate_index(query_index) if query_index || indices.empty?
 
           indices.inject([]) do |metrics, index|
             metrics << base.merge("#{conf.prefix}index" => index,
