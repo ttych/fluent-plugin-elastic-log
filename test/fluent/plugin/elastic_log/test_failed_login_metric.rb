@@ -207,6 +207,38 @@ class TestFailedLoginMetric < Test::Unit::TestCase
       assert_equal expected_metrics, metrics
     end
 
+    test 'generates metrics with msearch query_type and index list' do
+      record = @record.merge(
+        request_path: '/test_index_pattern_list1*/_msearch',
+        request_body: "{\"index\":[\"test_index_pattern_list1*\",\"test_index_pattern_list2*\"]}\n" \
+        "{}\n"
+      )
+      metric = Fluent::Plugin::ElasticLog::FailedLoginMetric.new(
+        record: record,
+        conf: FakeAuditLogMetricConf.new(aggregate_index: true)
+      )
+
+      metrics = metric.generate_metrics
+
+      expected_metrics = [{ 'cluster' => 'TEST_CLUSTER',
+                            'index' => 'test_index_pattern_list1',
+                            'metric_name' => 'failed_login_count',
+                            'metric_value' => 1,
+                            'query_type' => 'msearch',
+                            'timestamp' => '2023-02-03T04:05:06.777Z',
+                            'user' => 'test_user' },
+                          { 'cluster' => 'TEST_CLUSTER',
+                            'index' => 'test_index_pattern_list2',
+                            'metric_name' => 'failed_login_count',
+                            'metric_value' => 1,
+                            'query_type' => 'msearch',
+                            'timestamp' => '2023-02-03T04:05:06.777Z',
+                            'user' => 'test_user' }]
+
+      assert_equal 2, metrics.size
+      assert_equal expected_metrics, metrics
+    end
+
     test 'generates metrics with search query_type' do
       record = @record.merge(
         request_path: '/test_index_read/_search'

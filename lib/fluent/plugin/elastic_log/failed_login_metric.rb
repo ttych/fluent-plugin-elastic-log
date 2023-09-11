@@ -74,7 +74,8 @@ module Fluent
 
           req_body.each_line.each_slice(2).with_object(Set.new) do |(cmd_line, _data_line), acc|
             cmd = JSON.parse(cmd_line)
-            acc << aggregate_index(cmd['index'])
+            index = cmd['index']
+            [index].flatten.each { |index_i| acc << aggregate_index(index_i) }
           end
         end
 
