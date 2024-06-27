@@ -262,4 +262,61 @@ class TestFailedLoginMetric < Test::Unit::TestCase
       assert_equal expected_metrics, metrics
     end
   end
+
+  sub_test_case 'no request_body' do
+    test 'generates metrics for each resolved indices' do
+      conf = FakeAuditLogMetricConf.new(aggregate_index: false)
+      record = {
+        timestamp: '2023-02-03T04:05:06.777Z',
+        user: 'test_user',
+        cluster: 'TEST_CLUSTER',
+        layer: 'TRANSPORT',
+        request_path: '/',
+        request_body: nil
+      }
+      metric = Fluent::Plugin::ElasticLog::FailedLoginMetric.new(
+        record: record,
+        conf: conf
+      )
+
+      metrics = metric.generate_metrics
+
+      expected_metrics = [{ 'timestamp' => '2023-02-03T04:05:06.777Z',
+                            'metric_name' => 'failed_login_count',
+                            'metric_value' => 1,
+                            'user' => 'test_user',
+                            'cluster' => 'TEST_CLUSTER',
+                            'query_type' => 'other',
+                            'index' => nil }]
+
+      assert_equal 1, metrics.size
+      assert_equal expected_metrics, metrics
+    end
+
+    test 'generates metrics with msearch query_type' do
+      record = @record.merge(
+        request_path: '/test_index_search/_msearch',
+        request_body: nil
+      )
+      metric = Fluent::Plugin::ElasticLog::FailedLoginMetric.new(
+        record: record,
+        conf: FakeAuditLogMetricConf.new(aggregate_index: true)
+      )
+
+      metrics = metric.generate_metrics
+
+      expected_metrics = [
+        { 'cluster' => 'TEST_CLUSTER',
+          'index' => 'test_index_search',
+          'metric_name' => 'failed_login_count',
+          'metric_value' => 1,
+          'query_type' => 'msearch',
+          'timestamp' => '2023-02-03T04:05:06.777Z',
+          'user' => 'test_user' }
+      ]
+
+      assert_equal 1, metrics.size
+      assert_equal expected_metrics, metrics
+    end
+  end
 end

@@ -59,7 +59,7 @@ module Fluent
         end
 
         def bulk_indices
-          req_body = record.fetch(:request_body, {})
+          req_body = record[:request_body] || {}
           return [] if req_body.empty?
 
           req_body.each_line.each_slice(2).with_object(Set.new) do |(cmd_line, _data_line), acc|
@@ -69,7 +69,7 @@ module Fluent
         end
 
         def msearch_indices
-          req_body = record.fetch(:request_body, {})
+          req_body = record[:request_body] || {}
           return [] if req_body.empty?
 
           req_body.each_line.each_slice(2).with_object(Set.new) do |(cmd_line, _data_line), acc|
