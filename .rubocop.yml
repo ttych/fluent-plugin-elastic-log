@@ -1,9 +1,17 @@
-require:
+---
+
+plugins:
   - rubocop-rake
 
 AllCops:
-  TargetRubyVersion: 2.4
+  TargetRubyVersion: 2.7
   NewCops: enable
+
+Gemspec/DevelopmentDependencies:
+  EnforcedStyle: gemspec
+
+Metrics/AbcSize:
+  Max: 20
 
 Metrics/BlockLength:
   Exclude:
@@ -24,3 +32,6 @@ Metrics/ParameterLists:
 Naming/MethodParameterName:
   Exclude:
     - lib/fluent/plugin/out_elastic_audit_log_metric.rb
+
+Style/Documentation:
+  Enabled: false

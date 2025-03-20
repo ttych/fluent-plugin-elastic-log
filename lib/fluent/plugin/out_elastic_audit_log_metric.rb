@@ -34,7 +34,9 @@ module Fluent
       ALLOWED_CATEGORIES = %w[GRANTED_PRIVILEGES FAILED_LOGIN].freeze
       # FAILED_LOGIN AUTHENTICATED MISSING_PRIVILEGES SSL_EXCEPTION
       # OPENDISTRO_SECURITY_INDEX_ATTEMPT BAD_HEADERS
+      DEFAULT_CATEGORIES = %w[GRANTED_PRIVILEGES].freeze
 
+      CONFIGURATION_KEYS = %w[category layer request_type cluster user indices r_indices timestamp privilege].freeze
       DEFAULT_CATEGORY_KEY = 'audit_category'
       DEFAULT_LAYER_KEY = 'audit_request_layer'
       DEFAULT_REQUEST_TYPE = 'audit_transport_request_type'
@@ -46,12 +48,16 @@ module Fluent
       DEFAULT_REQUEST_BODY = 'audit_request_body'
       DEFAULT_TIMESTAMP_KEY = '@timestamp'
       DEFAULT_PRIVILEGE_KEY = 'audit_request_privilege'
-      DEFAULT_PREFIX = ''
+
+      DEFAULT_AGGREGATE_INDEX_CLEAN_SUFFIX = [].freeze
+      DEFAULT_AGGREGATE_INTERVAL = nil
+
+      DEFAULT_METADATA_PREFIX = ''
 
       desc 'Tag to emit metric events on'
       config_param :tag, :string, default: nil
       desc 'Categories selected to be converted to metrics'
-      config_param :categories, :array, default: ALLOWED_CATEGORIES, value_type: :string
+      config_param :categories, :array, default: DEFAULT_CATEGORIES, value_type: :string
 
       desc 'Category key'
       config_param :category_key, :string, default: DEFAULT_CATEGORY_KEY
@@ -78,10 +84,17 @@ module Fluent
 
       desc 'Timestamp format'
       config_param :timestamp_format, :enum, list: %i[iso epochmillis epochmillis_str], default: :iso
-      desc 'Attribute prefix'
-      config_param :prefix, :string, default: DEFAULT_PREFIX
-      desc 'Aggregate index'
-      config_param :aggregate_index, :bool, default: true
+
+      desc 'Metadata prefix'
+      config_param :metadata_prefix, :string, default: DEFAULT_METADATA_PREFIX
+
+      desc 'Index suffix to clean, to aggregate_index'
+      config_param :aggregate_index_clean_suffix, :array, value_type: :regexp,
+                                                          default: DEFAULT_AGGREGATE_INDEX_CLEAN_SUFFIX
+
+      desc 'Aggregate interval, to aggregate metrics by time'
+      config_param :aggregate_interval, :integer, default: DEFAULT_AGGREGATE_INTERVAL
+
       desc 'Events block size'
       config_param :event_stream_size, :integer, default: 1000
 
@@ -105,7 +118,7 @@ module Fluent
       end
 
       def check_configuration_keys
-        keys = %w[category layer request_type cluster user indices r_indices timestamp privilege]
+        keys = CONFIGURATION_KEYS
         invalid_keys = keys.each_with_object([]) do |key, invalid|
           key_label = "#{key}_key"
           key_value = send(key_label)
@@ -115,11 +128,12 @@ module Fluent
         raise Fluent::ConfigError, "#{NAME}: #{invalid_keys} are empty" if invalid_keys.any?
       end
 
-      def process(_tag, es)
-        metrics = metric_processor.process(tag, es) || []
+      def process(es_tag, es)
+        time = Fluent::EventTime.now
+        metrics = metric_processor.process(es_tag, es) || []
         metrics.each_slice(event_stream_size) do |metrics_slice|
           metrics_es = MultiEventStream.new
-          metrics_slice.each { |time, record| metrics_es.add(time, record) }
+          metrics_slice.each { |record| metrics_es.add(time, record) }
           router.emit_stream(tag, metrics_es)
         end
       end

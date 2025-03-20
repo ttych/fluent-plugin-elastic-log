@@ -10,8 +10,6 @@ module Fluent
       # record to metric converter
       #   for FAILED_LOGIN
       class FailedLoginMetric
-        attr_reader :record, :conf
-
         ELASTIC_URL_PATTERN = %r{(?:/(?<target>[^/]*))?/(?<action>_\w+)}.freeze
         QUERY_TYPE_MAP = {
           '_msearch' => 'msearch',
@@ -21,16 +19,43 @@ module Fluent
           '_search' => 'search'
         }.freeze
 
-        INDEX_PATTERN = /-?\*$/.freeze
-        ILM_PATTERN = /-\d{6}$/.freeze
+        attr_reader :record, :conf
 
         def initialize(record:, conf:)
           @record = record
           @conf = conf
         end
 
+        def record_timestamp
+          record[conf.timestamp_key]
+        end
+
+        def record_user
+          record[conf.user_key]
+        end
+
+        def record_cluster
+          record[conf.cluster_key]
+        end
+
+        def record_layer
+          record[conf.layer_key]
+        end
+
+        def record_request_path
+          record[conf.rest_request_path_key]
+        end
+
+        def record_request_body
+          record[conf.request_body_key]
+        end
+
         def timestamp
-          timestamp = Time.parse(record[:timestamp])
+          timestamp = Time.parse(record_timestamp)
+
+          if conf.aggregate_interval.to_i.positive?
+            timestamp = Time.at((timestamp.to_i / conf.aggregate_interval) * conf.aggregate_interval)
+          end
 
           return (timestamp.utc.to_f * 1000).to_i if conf.timestamp_format == :epochmillis
           return timestamp.utc.strftime('%s%3N') if conf.timestamp_format == :epochmillis_str
@@ -41,7 +66,7 @@ module Fluent
         end
 
         def query_details
-          if (match = ELASTIC_URL_PATTERN.match(record[:request_path]))
+          if (match = ELASTIC_URL_PATTERN.match(record_request_path))
             return [QUERY_TYPE_MAP.fetch(match[:action], 'other'),
                     match[:target]]
           end
@@ -53,13 +78,13 @@ module Fluent
             'timestamp' => timestamp,
             'metric_name' => 'failed_login_count',
             'metric_value' => 1,
-            "#{conf.prefix}user" => record[:user],
-            "#{conf.prefix}cluster" => record[:cluster]
+            "#{conf.metadata_prefix}user" => record_user,
+            "#{conf.metadata_prefix}cluster" => record_cluster
           }
         end
 
         def bulk_indices
-          req_body = record[:request_body] || {}
+          req_body = record_request_body || {}
           return [] if req_body.empty?
 
           req_body.each_line.each_slice(2).with_object(Set.new) do |(cmd_line, _data_line), acc|
@@ -69,7 +94,7 @@ module Fluent
         end
 
         def msearch_indices
-          req_body = record[:request_body] || {}
+          req_body = record_request_body || {}
           return [] if req_body.empty?
 
           req_body.each_line.each_slice(2).with_object(Set.new) do |(cmd_line, _data_line), acc|
@@ -80,25 +105,31 @@ module Fluent
         end
 
         def aggregate_index(index)
-          return unless index
-          return index unless conf.aggregate_index
+          return index unless index && conf.aggregate_index_clean_suffix
 
-          index.sub(INDEX_PATTERN, '').sub(ILM_PATTERN, '')
+          conf.aggregate_index_clean_suffix.inject(index) do |index_clean, clean_pattern|
+            index_clean.sub(clean_pattern, '')
+          end
         end
 
         def generate_metrics
-          query_action, query_index = query_details
-          indices = case query_action
-                    when 'bulk' then bulk_indices
-                    when 'msearch' then msearch_indices
-                    else []
-                    end
-          indices << aggregate_index(query_index) if query_index || indices.empty?
+          metrics = []
 
-          indices.inject([]) do |metrics, index|
-            metrics << base.merge("#{conf.prefix}index" => index,
-                                  "#{conf.prefix}query_type" => query_action)
-          end
+          query_action, = query_details
+
+          # indices = case query_action
+          #           when 'bulk' then bulk_indices
+          #           when 'msearch' then msearch_indices
+          #           else []
+          #           end
+          # indices << aggregate_index(query_index) if query_index || indices.empty?
+
+          # indices.inject([]) do |metrics, index|
+          #   metrics << base.merge("#{conf.metadata_prefix}index" => index,
+          #                         "#{conf.metadata_prefix}query_type" => query_action)
+          # end
+
+          metrics << base.merge("#{conf.metadata_prefix}query_type" => query_action)
         end
       end
     end

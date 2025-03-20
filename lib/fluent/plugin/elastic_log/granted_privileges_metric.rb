@@ -29,9 +29,6 @@ module Fluent
           'indices:monitor/' => 'monitor'
         }.freeze
 
-        INDEX_PATTERN = /-?\*$/.freeze
-        ILM_PATTERN = /-\d{6}$/.freeze
-
         attr_reader :record, :conf
 
         def initialize(record:, conf:)
@@ -39,8 +36,44 @@ module Fluent
           @conf = conf
         end
 
+        def record_timestamp
+          record[conf.timestamp_key]
+        end
+
+        def record_privilege
+          record[conf.privilege_key]
+        end
+
+        def record_user
+          record[conf.user_key]
+        end
+
+        def record_cluster
+          record[conf.cluster_key]
+        end
+
+        def record_indices
+          record[conf.indices_key]
+        end
+
+        def record_r_indices
+          record[conf.r_indices_key]
+        end
+
+        def record_layer
+          record[conf.layer_key]
+        end
+
+        def record_request_type
+          record[conf.request_type_key]
+        end
+
         def timestamp
-          timestamp = Time.parse(record[:timestamp])
+          timestamp = Time.parse(record_timestamp)
+
+          if conf.aggregate_interval.to_i.positive?
+            timestamp = Time.at((timestamp.to_i / conf.aggregate_interval) * conf.aggregate_interval)
+          end
 
           return (timestamp.utc.to_f * 1000).to_i if conf.timestamp_format == :epochmillis
           return timestamp.utc.strftime('%s%3N') if conf.timestamp_format == :epochmillis_str
@@ -52,7 +85,7 @@ module Fluent
 
         def query_type
           PRIVILEGE_MAP.each do |pattern, name|
-            return name if record[:privilege].to_s.start_with?(pattern)
+            return name if record_privilege.to_s.start_with?(pattern)
           end
           'unknown'
         end
@@ -60,37 +93,45 @@ module Fluent
         def base
           {
             'timestamp' => timestamp,
-            'metric_name' => 'query_count',
             'metric_value' => 1,
-            "#{conf.prefix}user" => record[:user],
-            "#{conf.prefix}cluster" => record[:cluster],
-            "#{conf.prefix}query_type" => query_type
+            "#{conf.metadata_prefix}user" => record_user,
+            "#{conf.metadata_prefix}cluster" => record_cluster,
+            "#{conf.metadata_prefix}query_type" => query_type
           }
         end
 
         def indices
-          indices = record[:r_indices] || record[:indices] || [nil]
-          if conf.aggregate_index
-            indices = indices.inject(Set.new) do |acc, index|
-              acc << aggregate_index(index)
-            end
+          indices = record_r_indices || record_indices || [nil]
+          indices.inject(Set.new) do |acc, index|
+            acc << aggregate_index(index)
           end
-          indices
         end
 
         def aggregate_index(index)
-          return unless index
-          return index unless conf.aggregate_index
+          return index unless index && conf.aggregate_index_clean_suffix
 
-          index.sub(INDEX_PATTERN, '').sub(ILM_PATTERN, '')
+          conf.aggregate_index_clean_suffix.inject(index) do |index_clean, clean_pattern|
+            index_clean.sub(clean_pattern, '')
+          end
         end
 
         def generate_metrics
-          metrics = []
-          indices.each do |index|
-            metrics << base.merge("#{conf.prefix}index" => index)
+          generate_user_metrics + generate_index_metrics
+        end
+
+        def generate_user_metrics
+          [
+            base.merge('metric_name' => 'user_query_count')
+          ]
+        end
+
+        def generate_index_metrics
+          indices.inject([]) do |metrics, index|
+            metrics << base.merge(
+              'metric_name' => 'index_query_count',
+              "#{conf.metadata_prefix}index" => index
+            )
           end
-          metrics
         end
       end
     end

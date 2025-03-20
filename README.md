@@ -2,6 +2,7 @@
 
 [Fluentd](https://fluentd.org/) filter plugin to process elastic logs.
 
+
 ## plugins
 
 ### out - elastic_audit_log_metric
@@ -40,14 +41,39 @@ parameters for input record:
 
 parameters for output metric:
 * timestamp_format: Timestamp format (iso, epochmillis, epochmillis_str)
-* prefix: Attribute prefix for output metric
-* aggregate_index: Aggregate index (remove ilm suffix, wildcard suffix)
+* metadata_prefix: Metadata prefix for output metric
+
+parameters to aggregate metrics:
+* aggregate_index_clean_suffix: pattern to clean on index, to aggregate events
+* aggregate_interval: aggregate metrics by time interval, to reduce count of emitted events
 
 More details from the
 [elastic_audit_log_metric output plugin code](lib/fluent/plugin/out_elastic_audit_log_metric.rb#L49)
 
-## Installation
 
+produces metrics:
+
+| from category      | metric_name        | purpose                                             |
+|--------------------|--------------------|-----------------------------------------------------|
+| GRANTED_PRIVILEGES | user_query_count   | Query count made by users                           |
+| GRANTED_PRIVILEGES | index_query_count  | Query count made by index / index pattern with user |
+|--------------------|--------------------|-----------------------------------------------------|
+| FAILED_LOGIN       | failed_login_count | Count failed login by users without index           |
+
+
+Categories are :
+
+| Category           | Meaning                                                                         |
+|--------------------|---------------------------------------------------------------------------------|
+| FAILED_LOGIN       | Indicates unsuccessful authentication attempts (~ 401)                          |
+| MISSING_PRIVILEGES | Occurs when a user attempts an action without the necessary permissions (~ 403) |
+| BAD_HEADERS        | Triggered by requests containing malformed or invalid headers                   |
+| SSL_EXCEPTION      | Relates to issues with SSL/TLS connections, such as handshake failures.         |
+| AUTHENTICATED      | Records successful user authentications                                         |
+| GRANTED_PRIVILEGES | Logs instances where users are granted specific privileges                      |
+
+
+## Installation
 
 Manual install, by executing:
 
@@ -57,14 +83,18 @@ Add to Gemfile with:
 
     $ bundle add fluent-plugin-elastic-log
 
+
 ## Compatibility
 
 plugin in 1.x.x will work with:
-- ruby >= 2.4.10
-- td-agent >= 3.8.1-0
+- ruby >= 2.7.0
+- fluentd >= 1.8.0
+
+see [gemspec](fluent-plugin-elastic-log.gemspec).
+
 
 ## Copyright
 
-* Copyright(c) 2023- Thomas Tych
+* Copyright(c) 2023-2025 Thomas Tych
 * License
   * Apache License, Version 2.0
