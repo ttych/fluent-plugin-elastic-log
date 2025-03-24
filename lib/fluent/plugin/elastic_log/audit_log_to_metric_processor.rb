@@ -18,7 +18,7 @@ module Fluent
         def process(_tag, log_es)
           metric_acc = new_metric_accumulator
 
-          log_es.each_value do |record|
+          log_es.each do |_time, record|  # rubocop:disable all
             next unless record
             next unless (category = record[conf.category_key])
             next unless conf.categories.include? category
