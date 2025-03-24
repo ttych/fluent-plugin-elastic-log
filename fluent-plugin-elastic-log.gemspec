@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors = ['Thomas Tych']
   spec.email   = ['thomas.tych@gmail.com']
 
-  spec.summary       = "fluentd plugins to process elastic logs.'"
+  spec.summary       = "fluentd plugins to process elastic logs"
   spec.homepage      = 'https://gitlab.com/ttych/fluent-plugin-elastic-log'
   spec.license       = 'Apache-2.0'
 
